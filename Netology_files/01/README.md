@@ -1,4 +1,4 @@
-#Задача 1
+# _Задача 1_
 
 - Terraform screen: ![TF](img/pycharm64_tf.png)
 - JSON screen ![JSON](img/pycharm64_json.png)
@@ -6,7 +6,7 @@
 - Bash screen ![bash](img/pycharm64_bash.png)
 - YAML screen ![YAML](img/pycharm64_yaml.png)
 
-#Задача 2
+# _Задача 2_
 
 # Этапы жизненного цикла
 
