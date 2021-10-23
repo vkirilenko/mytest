@@ -1,10 +1,10 @@
 #Задача 1
 
-1. [Terraform screen](img/pycharm64_tf.png)
-1. [JSON screen](img/pycharm64_json.png)
-1. [Markdown screen](img/pycharm64_md.png)
-1. [Bash screen](img/pycharm64_bash.png)
-1. [YAML screen](pycharm64_yaml.png)
+- Terraform screen: ![TF](img/pycharm64_tf.png)
+- JSON screen ![JSON](img/pycharm64_json.png)
+- Markdown screen ![MD](img/pycharm64_md.png)
+- Bash screen ![bash](img/pycharm64_bash.png)
+- YAML screen ![YAML](img/pycharm64_yaml.png)
 
 #Задача 2
 
