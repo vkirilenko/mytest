@@ -1,0 +1,77 @@
+- hosts: localhost
+    become: true
+    vars_files:
+        - vars/main.yaml
+    tasks:
+    - name: start node
+        ec2:
+            key_name: "A2_CV"
+            instance_type: "t2.micro"
+            image: <image_name>
+            wait: truecount: 2
+            vpc_subnet_id: <subnet_name>
+            group_id: <group_name>
+            assign_public_ip: true
+            region: <region_name>
+            state: present
+            group: "default"
+            aws_access_key: <access key>
+            aws_secret_key: <secret key>
+            instance_tags: {"Name": "Worker", "Cluster": "k8s"}
+    - name: docker install
+        package:
+            name:
+                - docker
+            state: present            
+    - name: create repo
+        yum_repository:
+            name: kubernetes
+            description: yum_repository
+            baseurl: https://packages.cloudgoogle.com/yum/repos/kubernetes-el7-\$basearch
+            enabled: yes
+            exclude: 
+            - kubeadm
+            - kubectl
+            - kubelet
+    - name: k8s install
+        yum:
+            name: kubeadm
+            disable_excludes: kubernetes
+    - name: docker run
+        service:
+            name: docker
+            state: started
+            enabled: true
+        loop:
+            - kubelet
+            - docker
+        shell: 
+            kubeadm config images pull
+        copy:
+            dest: /etc/docker/daemon.json
+            src: daemon.json
+        service:
+            name: docker
+            state: restarted
+    - name: k8s start
+        copy:
+            dest: /etc/sysctl.d/k8s.conf
+            src: k8s.conf
+        shell:
+            "sysctl --system"
+            "kubeadm init -pod-network-cidr=<ip address>"
+        ignore_errors: true
+        file:
+            name: "$HOME/.kube"
+            state: directory
+        command: "cp -i /etc/kubernetes/admin.conf $HOME/.kube/config"
+        ignore_errors: true
+        shell:
+            "kubeadm token create --print-join-command"
+        register:
+            join
+
+    
+        
+    
+            
