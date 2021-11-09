@@ -1,0 +1,30 @@
+-- only for documentation
+-- raw row:
+-- {
+--   "datetime":"2019-08-29T14:45:28.414433Z",
+--   "log":"E0829 14:45:28.414156       1 reflector.go:205] k8s.io/kube-state-metrics/pkg/collectors/builder.go:508: Failed to list *v1beta1.PodDisruptionBudget: poddisruptionbudgets.policy is forbidden: User \"system:serviceaccount:monitoring:kube-state-metrics\" cannot list resource \"poddisruptionbudgets\" in API group \"policy\" at the cluster scope\n",
+--   "stream":"stderr",
+--   "time":"2019-08-29T14:45:28.414433869Z",
+--   "pod_name":"monitoring-kube-state-metrics-67d954cc4c-928xl",
+--   "namespace_name":"monitoring",
+--   "pod_id":"f2e1cb34-c8cd-11e9-84cb-ca2c3c42b6cb",
+--   "host":"default-pool-rizw",
+--   "container_name":"kube-state-metrics",
+--   "docker_id":"9c469c4ca60e158909b67a826f96d0f1dbcd00a8d89e1f3b3c732b34d5f4547b"
+-- }
+CREATE TABLE IF NOT EXISTS k8s_logs.dev (
+    datetime       DateTime,
+    namespace_name String,
+    host           String,
+    pod_name       String,
+    container_name String,
+    stream         Enum8('stdout' = 1, 'stderr' = 2),
+    time           String,
+    log            String
+)
+ENGINE=ReplicatedMergeTree(
+    '/clickhouse/tables/{shard}/k8s_logs.dev', '{replica}'
+)
+PARTITION BY toYYYYMM(datetime)
+ORDER BY (namespace_name, datetime)
+TTL datetime + INTERVAL 1 YEAR;
