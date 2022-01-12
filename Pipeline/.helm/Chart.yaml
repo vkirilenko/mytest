@@ -1,0 +1,10 @@
+description: DBase Helm chart for Kubernetes.
+apiVersion: v2
+home: https://dbase.pro/
+maintainers:
+- email: vkirilenko@gmail.com
+  name: My Name
+name: xpaste
+sources:
+- https://gitlab.vkirilenko.io/dbase
+version: 1.0.0
