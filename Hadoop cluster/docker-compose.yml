@@ -1,0 +1,47 @@
+version: "3"
+networks:
+  mynet:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.22.2.0/16
+services:
+  namenode:
+    image: vkirilenko/basenode:1.0
+    hostname: namenode
+    restart: unless-stopped
+    tty: true
+    stdin_open: true 
+    ports:
+      - "8088:8088"      
+      - "8080:8080"
+      - "8042:8042"
+      - "9870:9870"
+      - "2221:22"
+    volumes:
+      - /mnt/namenode:/opt/mount1:rw
+      - /mnt/datanode:/opt/mount2:rw
+    environment:
+      - "USER=hdfs"
+    networks:
+      mynet:
+        ipv4_address: 172.22.2.1    
+  datanode:
+    image: vkirilenko/basenode:1.0
+    hostname: datanode
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    depends_on:
+      - namenode
+    ports:
+      - "9864:9864"
+      - "2222:22"
+    volumes:
+      - /mnt/namenode:/opt/mount1/:rw
+      - /mnt/datanode:/opt/mount2/:rw
+    environment:
+      - "USER=hdfs"
+    networks:
+      mynet:
+        ipv4_address: 172.22.2.2
