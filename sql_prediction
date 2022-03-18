@@ -1,0 +1,84 @@
+WITH RECURSIVE periods AS (
+  SELECT
+    *
+  , extract(epoch FROM p)::integer/86400 d
+  FROM
+    unnest('{1 week,1 month,3 months,1 year}'::interval[]) p
+)
+, src AS (
+  SELECT
+    jsonb_object(
+      array_agg(f.dt || ':' || f.d)::text[]
+    , array_agg(f.v)::text[]
+    ) s -- свертка в {[dt:d] : v}
+  FROM
+    periods
+  , LATERAL (
+      SELECT
+        dt
+      , 1 d
+      , v -- данные за [dt]
+      FROM
+        tbl_fact
+    UNION ALL
+      SELECT
+        dt
+      , d
+      , coalesce(sum(v) OVER(ROWS BETWEEN d-1 PRECEDING AND CURRENT ROW), 0) v -- данные за [dt-d+1 .. dt]
+      FROM
+        tbl_fact
+    ) f
+  )
+, T AS (
+  SELECT
+    '2022-01-01'::date - 1 dt -- стартовая дата
+  , NULL::double precision v
+  , (TABLE src) s -- начальное состояние словаря
+UNION ALL
+  SELECT
+    dt + 1
+  , X.v
+  , X.s
+  FROM
+    T
+  , LATERAL (
+      SELECT
+        X.v
+      , T.s || Y.s s
+      FROM
+        (
+          SELECT
+            greatest(avg(
+              (s ->> ((dt     - 1) || ':' || d))::double precision -- A'
+            / (s ->> ((dt - d - 1) || ':' || d))::double precision -- B'
+            * (s ->> ((dt - d    ) || ':' || d))::double precision -- B
+            - (s ->> ((dt     - 1) || ':' || d))::double precision -- A' - [dt-d]
+            + (s ->> ((dt - d    ) || ':' || 1))::double precision
+            ), 0) v -- прогнозируемое значение не может быть отрицательным
+          FROM
+            periods
+        ) X
+      , LATERAL(
+          SELECT
+            jsonb_object(
+              array_agg((dt + 1) || ':' || d)::text[]
+            , array_agg(
+                (s ->> ((dt - 1) || ':' || d))::double precision
+              - (s ->> ((dt - d) || ':' || 1))::double precision
+              + v
+              )::text[]
+            ) s -- словарь рассчитанныx сумм
+          FROM
+            periods
+        ) Y
+    ) X
+  WHERE
+    dt < '2022-12-31' -- финальная рассчитываемая дата
+)
+SELECT
+  dt
+, v
+FROM
+  T
+WHERE
+  dt >= '2022-01-01';
